@@ -1,7 +1,6 @@
 package fintech.homework01
 
 import scala.collection.mutable
-import util.control.Breaks._
 
 // Используя функции io.readLine и io.printLine напишите игру "Виселица"
 // Пример ввода и тест можно найти в файле src/test/scala/fintech/homework01/HangmanTest.scala
@@ -41,11 +40,11 @@ class Hangman(io: IODevice) {
     input.length == 1 && input.charAt(0).isLetter
   }
 
-  def findIndexes(word: String, letter: Char): Set[AnyVal] = {
-    Stream.tabulate(word.length)(i => if (word.charAt(i) == letter) i).toSet
+  def findIndexes(word: String, letter: Char): Set[Int] = {
+    Stream.tabulate(word.length)(i => if (word.charAt(i) == letter) i else -1).filter(index => index != -1).toSet
   }
 
-  def replaceLetters(guessedLetters: String, letter : Char, indexes: Set[AnyVal]): String = {
+  def replaceLetters(guessedLetters: String, letter : Char, indexes: Set[Int]): String = {
     Stream.tabulate(guessedLetters.length)(i => if (indexes.contains(i)) letter else guessedLetters.charAt(i)).mkString
   }
 
@@ -55,18 +54,18 @@ class Hangman(io: IODevice) {
     val previousLetters = new mutable.HashSet[Char]()
     while (mistakesCount < maxMistakesNumber && word != guessedLetters)
     {
-      breakable {
         io.printLine("Word: " + guessedLetters + "\nGuess a letter:")
         val input = io.readLine()
-        if (!isCorrect(input)) break
-        val letter = input.charAt(0)
-        if (previousLetters.contains(letter)) break
-        if (word.contains(letter))
-          guessedLetters = replaceLetters(guessedLetters, letter, findIndexes(word, letter))
-        else mistakesCount += 1
-        previousLetters.add(letter)
-        if (mistakesCount > 0) io.printLine(stages(mistakesCount - 1))
-      }
+        if (isCorrect(input)) {
+          val letter = input.charAt(0)
+          if (!previousLetters.contains(letter)) {
+            if (word.contains(letter))
+              guessedLetters = replaceLetters(guessedLetters, letter, findIndexes(word, letter))
+            else mistakesCount += 1
+            previousLetters.add(letter)
+            if (mistakesCount > 0) io.printLine(stages(mistakesCount - 1))
+          }
+        }
     }
     if (mistakesCount == maxMistakesNumber) io.printLine("You are dead")
     else io.printLine("Win")
